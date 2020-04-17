@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.clients.producer;
 
+import org.apache.kafka.clients.producer.internals.ProducerInterceptors;
 import org.apache.kafka.common.Configurable;
 
 /**
@@ -33,6 +34,8 @@ import org.apache.kafka.common.Configurable;
  * ProducerInterceptor callbacks may be called from multiple threads. Interceptor implementation must ensure thread-safety, if needed.
  * <p>
  * Implement {@link org.apache.kafka.common.ClusterResourceListener} to receive cluster metadata once it's available. Please see the class documentation for ClusterResourceListener for more information.
+ * 经典的过滤链模式
+ * @see ProducerInterceptors
  */
 public interface ProducerInterceptor<K, V> extends Configurable {
     /**
