@@ -34,7 +34,8 @@ import org.apache.kafka.common.Configurable;
  * ProducerInterceptor callbacks may be called from multiple threads. Interceptor implementation must ensure thread-safety, if needed.
  * <p>
  * Implement {@link org.apache.kafka.common.ClusterResourceListener} to receive cluster metadata once it's available. Please see the class documentation for ClusterResourceListener for more information.
- * 经典的过滤链模式
+ * 经典的过滤链模式，对于这种客户端来讲，过滤链可以说是标准设计。大致流程如下：
+ * send -> interceptor -> internet -> interceptor -> receive
  * @see ProducerInterceptors
  */
 public interface ProducerInterceptor<K, V> extends Configurable {

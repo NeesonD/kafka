@@ -35,6 +35,12 @@ import java.util.concurrent.TimeUnit;
  * The interface for the {@link KafkaProducer}
  * @see KafkaProducer
  * @see MockProducer
+ * 客户端设计：
+ * Operations 接口，定义操作 API
+ * ProducerFactory 定义连接
+ * Interceptor 定义拦截器
+ * decode-encode 定义编解码
+ * KafkaTemplate 客户端 API 实现类
  */
 public interface Producer<K, V> extends Closeable {
 

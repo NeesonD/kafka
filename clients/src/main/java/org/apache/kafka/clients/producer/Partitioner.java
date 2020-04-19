@@ -23,6 +23,11 @@ import java.io.Closeable;
 
 /**
  * Partitioner Interface
+ * 本质就是 loadbalance
+ * 核心：分区是实现负载均衡以及高吞吐量的关
+ * 键，故在生产者这一端就要仔细盘算合适的分区策略，避免
+ * 造成消息数据的“倾斜”，使得某些分区成为性能瓶颈，这
+ * 样极易引发下游数据消费的性能下降
  */
 
 public interface Partitioner extends Configurable, Closeable {
@@ -35,7 +40,7 @@ public interface Partitioner extends Configurable, Closeable {
      * @param keyBytes The serialized key to partition on( or null if no key)
      * @param value The value to partition on or null
      * @param valueBytes The serialized value to partition on or null
-     * @param cluster The current cluster metadata
+     * @param cluster The current cluster metadata (kafka 集群有多少主题，多少 broker 等)
      */
     public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster);
 
