@@ -12,3 +12,13 @@
 * Partitioner
 * Callback
 * Serializer/Deserializer
+
+
+#### 客户端核心功能点
+
+* 自定义分区规则
+* 压缩算法的启动和选型
+
+
+#### broker
+

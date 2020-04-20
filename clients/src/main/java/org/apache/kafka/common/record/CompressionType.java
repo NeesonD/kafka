@@ -33,6 +33,12 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * The compression type to use
+ * LE-
+ * 支持压缩
+ * 何时打开压缩，以及如何选压缩算法，也可以看做是一种特殊的编解码（压缩比和吞吐）
+ *  * Producer CPU 充足
+ *  * 带宽资源有限
+ *  * 根据业务情况，选择合适的 压缩算法，最大化资源利用率
  */
 public enum CompressionType {
     NONE(0, "none", 1.0f) {

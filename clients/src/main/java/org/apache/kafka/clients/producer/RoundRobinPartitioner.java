@@ -31,7 +31,8 @@ import org.apache.kafka.common.utils.Utils;
  * 
  * This partitioning strategy can be used when user wants 
  * to distribute the writes to all partitions equally. This
- * is the behaviour regardless of record key hash. 
+ * is the behaviour regardless of record key hash.
+ * LE-
  * 优点就是：负载平均
  */
 public class RoundRobinPartitioner implements Partitioner {

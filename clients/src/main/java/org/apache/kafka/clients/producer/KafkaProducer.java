@@ -245,6 +245,11 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final RecordAccumulator accumulator;
     private final Sender sender;
     private final Thread ioThread;
+    /**
+     * 压缩类型，注意 broker 也有压缩算法，如果两边的算法不一致，会导致 broker 解压缩再压缩，可能会导致 cpu 飙升
+     * 版本不兼容（两大类消息格式），也可能导致 broker 解压缩再压缩，还可能导致 Zero Copy 的失效
+     * Producer 端压缩、Broker 端保持（这里的解压缩主要是为了检验 CRC）、Consumer端解压缩
+     */
     private final CompressionType compressionType;
     private final Sensor errors;
     private final Time time;
