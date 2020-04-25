@@ -42,15 +42,18 @@ import scala.math._
  * any previous segment.
  *
  * A segment with a base offset of [base_offset] would be stored in two files, a [base_offset].index and a [base_offset].log file.
- *
+ * LE-
+ * 核心日志和索引
  * @param log The file records containing log entries
- * @param lazyOffsetIndex The offset index
- * @param lazyTimeIndex The timestamp index
- * @param txnIndex The transaction index
+ * @param lazyOffsetIndex The offset index. *.index
+ * @param lazyTimeIndex The timestamp index. *.timeindex
+ * @param txnIndex The transaction index. *.txnindex
  * @param baseOffset A lower bound on the offsets in this segment
- * @param indexIntervalBytes The approximate number of bytes between entries in the index
- * @param rollJitterMs The maximum random jitter subtracted from the scheduled segment roll time
+ * @param indexIntervalBytes The approximate number of bytes between entries in the index。控制日志段对象新增索引项的频率
+ * @param rollJitterMs The maximum random jitter subtracted from the scheduled segment roll time 扰动值
  * @param time The time instance
+ *             Log 包含多个 LogSegment，LogSegment 中最核心的两个组件是 [base_offset].index 和 [base_offset].log，这两个文件在分区目录下面可以看到
+ *             核心方法：append、read、recover
  */
 @nonthreadsafe
 class LogSegment private[log] (val log: FileRecords,
@@ -152,6 +155,7 @@ class LogSegment private[log] (val log: FileRecords,
       if (physicalPosition == 0)
         rollingBasedTimestamp = Some(largestTimestamp)
 
+      // 保证输入参数相对位移值是在 int.MAXVALUE 之内
       ensureOffsetInRange(largestOffset)
 
       // append the messages
@@ -279,10 +283,10 @@ class LogSegment private[log] (val log: FileRecords,
    * Read a message set from this segment beginning with the first offset >= startOffset. The message set will include
    * no more than maxSize bytes and will end before maxOffset if a maxOffset is specified.
    *
-   * @param startOffset A lower bound on the first offset to include in the message set we read
-   * @param maxSize The maximum number of bytes to include in the message set we read
-   * @param maxPosition The maximum position in the log segment that should be exposed for read
-   * @param minOneMessage If this is true, the first message will be returned even if it exceeds `maxSize` (if one exists)
+   * @param startOffset A lower bound on the first offset to include in the message set we read  要读取的第一条消息位移
+   * @param maxSize The maximum number of bytes to include in the message set we read  能读取到的最大字节数
+   * @param maxPosition The maximum position in the log segment that should be exposed for read 能读到的最大文件位置
+   * @param minOneMessage If this is true, the first message will be returned even if it exceeds `maxSize` (if one exists) 是否允许在消息体过大时至少返回第一条消息
    *
    * @return The fetched data and the offset metadata of the first message whose offset is >= startOffset,
    *         or null if the startOffset is larger than the largest offset in this log

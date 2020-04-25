@@ -42,6 +42,7 @@ import static org.apache.kafka.common.config.ConfigDef.ValidString.in;
 /**
  * Configuration for the Kafka Producer. Documentation for these configurations can be found in the <a
  * href="http://kafka.apache.org/documentation.html#producerconfigs">Kafka documentation</a>
+ * 这里是 Producer 配置类，需要好好研究里面的参数
  */
 public class ProducerConfig extends AbstractConfig {
 
