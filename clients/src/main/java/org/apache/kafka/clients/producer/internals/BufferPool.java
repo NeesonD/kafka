@@ -265,8 +265,9 @@ public class BufferPool {
                 this.nonPooledAvailableMemory += size;
             }
             Condition moreMem = this.waiters.peekFirst();
-            if (moreMem != null)
+            if (moreMem != null) {
                 moreMem.signal();
+            }
         } finally {
             lock.unlock();
         }

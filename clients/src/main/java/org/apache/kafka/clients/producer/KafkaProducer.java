@@ -959,8 +959,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             RecordAccumulator.RecordAppendResult result = accumulator.append(tp, timestamp, serializedKey,
                     serializedValue, headers, interceptCallback, remainingWaitMs, true, nowMs);
 
+            // 消息放入 RecordAccumulator 失败，则分配新批次
             if (result.abortForNewBatch) {
                 int prevPartition = partition;
+                // 切换新分区，保证消息均衡
                 partitioner.onNewBatch(record.topic(), cluster, prevPartition);
                 partition = partition(record, serializedKey, serializedValue, cluster);
                 tp = new TopicPartition(record.topic(), partition);
@@ -977,7 +979,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             if (transactionManager != null && transactionManager.isTransactional())
                 transactionManager.maybeAddPartitionToTransaction(tp);
 
-            // batch 满了或者新创建了一个 batch
+            // batch 满了或者新创建了一个 batch，就要唤醒发送线程
             if (result.batchIsFull || result.newBatchCreated) {
                 log.trace("Waking up the sender since topic {} partition {} is either full or getting a new batch", record.topic(), partition);
                 // 唤醒发送线程
@@ -1300,6 +1302,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
      * calls configured partitioner class to compute the partition.
      */
     private int partition(ProducerRecord<K, V> record, byte[] serializedKey, byte[] serializedValue, Cluster cluster) {
+        // 可以自己指定分区号，没有指定才会通过分区算法计算
         Integer partition = record.partition();
         return partition != null ?
                 partition :

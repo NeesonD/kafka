@@ -32,6 +32,17 @@ import org.apache.kafka.common.Cluster;
  *       partitioner. Records with the same key are not guaranteed to be sent to the same partition.
  * 
  * See KIP-480 for details about sticky partitioning.
+ *
+ * 为了解决小包问题，使用了批处理；而批处理的阈值，在吞吐量低时比较难达到（分区越多，越难达到），这势必会导致延迟。
+ * 所以这里使用了粘性分区，将消息全部放到一个分区，等创建新批次的时候，再选择下一个分区
+ *
+ * 具体实践：https://cwiki.apache.org/confluence/display/KAFKA/KIP-480%3A+Sticky+Partitioner
+ * 优化之后，cpu 使用率降低了，而且延迟也降低了。
+ *
+ * 可借鉴的设计：
+ *    * 批处理（解决小包问题）
+ *    * 粘性（解决低吞吐导致的延时问题）
+ *    * 切换（解决分区消息不均衡的问题）
  */
 public class UniformStickyPartitioner implements Partitioner {
 

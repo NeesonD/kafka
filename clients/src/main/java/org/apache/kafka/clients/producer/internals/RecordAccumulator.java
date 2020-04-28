@@ -69,6 +69,9 @@ public final class RecordAccumulator {
     private volatile boolean closed;
     private final AtomicInteger flushesInProgress;
     private final AtomicInteger appendsInProgress;
+    /**
+     * BATCH_SIZE_CONFIG
+     */
     private final int batchSize;
     private final CompressionType compression;
     private final int lingerMs;
@@ -193,7 +196,9 @@ public final class RecordAccumulator {
         if (headers == null) headers = Record.EMPTY_HEADERS;
         try {
             // check if we have an in-progress batch
+            // 每个 TopicPartition 对应一个 Deque<ProducerBatch>
             Deque<ProducerBatch> dq = getOrCreateDeque(tp);
+            // 对于同一 TopicPartition，消息是串行添加的
             synchronized (dq) {
                 if (closed)
                     throw new KafkaException("Producer closed while send in progress");
@@ -205,10 +210,13 @@ public final class RecordAccumulator {
             // we don't have an in-progress record batch try to allocate a new batch
             if (abortOnNewBatch) {
                 // Return a result that will cause another call to append.
+                // 这里主要是为了切换粘性分区，然后在进行一次 append
                 return new RecordAppendResult(null, false, false, true);
             }
 
+            // 分配一个新的 ProducerBatch，初始化对应的内存
             byte maxUsableMagic = apiVersions.maxUsableProduceMagic();
+            // 这里是取最大值，batchSize 通过配置 BATCH_SIZE_CONFIG 设定
             int size = Math.max(this.batchSize, AbstractRecords.estimateSizeInBytesUpperBound(maxUsableMagic, compression, key, value, headers));
             log.trace("Allocating a new {} byte message buffer for topic {} partition {}", size, tp.topic(), tp.partition());
             buffer = free.allocate(size, maxTimeToBlock);
@@ -226,6 +234,7 @@ public final class RecordAccumulator {
                     return appendResult;
                 }
 
+                // 相当于每一个 ProducerBatch 都对应一个 ByteBuffer，那必然有地方会复用或者清除 ByteBuffer
                 MemoryRecordsBuilder recordsBuilder = recordsBuilder(buffer, maxUsableMagic);
                 ProducerBatch batch = new ProducerBatch(tp, recordsBuilder, nowMs);
                 FutureRecordMetadata future = Objects.requireNonNull(batch.tryAppend(timestamp, key, value, headers,
@@ -239,8 +248,10 @@ public final class RecordAccumulator {
                 return new RecordAppendResult(future, dq.size() > 1 || batch.isFull(), true, false);
             }
         } finally {
-            if (buffer != null)
+            // 如果出现了异常，这里就会释放已分配的内存
+            if (buffer != null) {
                 free.deallocate(buffer);
+            }
             appendsInProgress.decrementAndGet();
         }
     }
@@ -264,12 +275,17 @@ public final class RecordAccumulator {
     private RecordAppendResult tryAppend(long timestamp, byte[] key, byte[] value, Header[] headers,
                                          Callback callback, Deque<ProducerBatch> deque, long nowMs) {
         ProducerBatch last = deque.peekLast();
+        // 如果有数据，就能够拿到最新的 ProducerBatch
         if (last != null) {
+            // 将消息添加到最新的 ProducerBatch
             FutureRecordMetadata future = last.tryAppend(timestamp, key, value, headers, callback, nowMs);
-            if (future == null)
+            // 添加失败，说明最新的 ProducerBatch 以及追加不了数据了
+            if (future == null) {
+                // 这里会释放部分资源
                 last.closeForRecordAppends();
-            else
+            } else {
                 return new RecordAppendResult(future, deque.size() > 1 || last.isFull(), false, false);
+            }
         }
         return null;
     }
@@ -644,6 +660,7 @@ public final class RecordAccumulator {
 
     /**
      * Get the deque for the given topic-partition, creating it if necessary.
+     * 获取已有队列或者初始化队列，线程安全
      */
     private Deque<ProducerBatch> getOrCreateDeque(TopicPartition tp) {
         Deque<ProducerBatch> d = this.batches.get(tp);
