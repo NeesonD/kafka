@@ -38,7 +38,7 @@ public final class Cluster {
     private final List<Node> nodes;
     private final Set<String> unauthorizedTopics;
     private final Set<String> invalidTopics;
-    private final Set<String> internalTopics;
+    private final Set<String> internalTopics; // 内置topic
     private final Node controller;
     private final Map<TopicPartition, PartitionInfo> partitionsByTopicPartition;
     private final Map<String, List<PartitionInfo>> partitionsByTopic;

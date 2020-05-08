@@ -71,6 +71,7 @@ public class ProducerMetadata extends Metadata {
         Objects.requireNonNull(topic, "topic cannot be null");
         if (topics.put(topic, nowMs + metadataIdleMs) == null) {
             newTopics.add(topic);
+            // 初始化新 topic 的metadata数据
             requestUpdateForNewTopics();
         }
     }

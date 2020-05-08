@@ -42,7 +42,8 @@ public class SystemTime implements Time {
     }
 
     @Override
-    public void waitObject(Object obj, Supplier<Boolean> condition, long deadlineMs) throws InterruptedException {
+    public void
+    waitObject(Object obj, Supplier<Boolean> condition, long deadlineMs) throws InterruptedException {
         synchronized (obj) {
             while (true) {
                 if (condition.get())

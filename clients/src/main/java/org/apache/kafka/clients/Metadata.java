@@ -60,12 +60,12 @@ import static org.apache.kafka.common.record.RecordBatch.NO_PARTITION_LEADER_EPO
  */
 public class Metadata implements Closeable {
     private final Logger log;
-    private final long refreshBackoffMs;
-    private final long metadataExpireMs;
+    private final long refreshBackoffMs;// 更新失败间隔时间
+    private final long metadataExpireMs;// 过期时间
     private int updateVersion;  // bumped on every metadata response
     private int requestVersion; // bumped on every new topic addition
-    private long lastRefreshMs;
-    private long lastSuccessfulRefreshMs;
+    private long lastRefreshMs;// 最新更新时间
+    private long lastSuccessfulRefreshMs; // 最新更新成功的时间
     private KafkaException fatalException;
     private Set<String> invalidTopics;
     private Set<String> unauthorizedTopics;

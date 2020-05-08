@@ -902,6 +902,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             long nowMs = time.milliseconds();
             ClusterAndWaitTime clusterAndWaitTime;
             try {
+                // 获取 topic 的 metadata
                 clusterAndWaitTime = waitOnMetadata(record.topic(), record.partition(), nowMs, maxBlockTimeMs);
             } catch (KafkaException e) {
                 if (metadata.isClosed())
@@ -982,7 +983,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // batch 满了或者新创建了一个 batch，就要唤醒发送线程
             if (result.batchIsFull || result.newBatchCreated) {
                 log.trace("Waking up the sender since topic {} partition {} is either full or getting a new batch", record.topic(), partition);
-                // 唤醒发送线程
+                // 唤醒发送线程，核心
                 this.sender.wakeup();
             }
             // 返回 future，调用 get 的时候，可以异步转同步
@@ -1059,8 +1060,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             }
             metadata.add(topic, nowMs + elapsed);
             int version = metadata.requestUpdateForTopic(topic);
+            // 唤醒 sender, 发送 metadata 请求
             sender.wakeup();
             try {
+                // 等待更新
                 metadata.awaitUpdate(version, remainingWaitMs);
             } catch (TimeoutException ex) {
                 // Rethrow with original maxWaitMs to prevent logging exception with remainingWaitMs
